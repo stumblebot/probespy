@@ -1,12 +1,13 @@
 #!/bin/bash
 
 #TODO
+
 #PRIORITY
 #Query within N miles of Y coordinate
-#Scriptargs
 #Behavioral profile DB seed
 #Behavioral profile info in report
 #Plaintext report option
+#Centralized report file
 
 #BACK BURNER
 #update report display format
@@ -14,46 +15,56 @@
 #use parallel where possible, script is far too linear
 #optimize new SSID sorting per mac
 #fix NULL display bug
-#fix bug that prevent some SSIDs from being identified and cleared
-#arg to designate directory where pcaps should be loaded from
 #maybe force each run to create a new results directory
-
 
 #set the internal field separator to newlines only
 IFS=$'\n'
 
 #Initialize variables
-INTERFACE=''
 WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:78398fe46316092e08c3838355cad0e8'
+
+usage() { 
+	echo "Usage:  bash probespy.sh -c <dir>" 1>&2
+	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
+	echo "Options:" 1>&2
+	echo "-c: The directory to read pcap files from" 1>&2
+	echo "-i: The network interface to capture packets on" 1>&2
+	echo "-h: Display this help" 1>&2
+	exit 1 
+}
 
 #Defining script arguments
 #work in progress
-: 'while getopts "i:h" option;
+while getopts :i:c:d:h option;
 do
         case $option in
         i)
                 networkInterface=$OPTARG
-                ;;
+		;;
+	c)
+		captureDir=$OPTARG
+		;;
+	d)
+		reportDir=$OPTARG
+		;;
         h)
-                echo "ProbeSpy anaylzes the contents of directed probe request to determine information about the device sending the requests.
-        Dependencies:
-        -tshark: Installed. Can be set to run as root, I dont care. Youll just have to sudo.
-        -wget: For downloading some resources 
-        Use:
-        -i: The network interface [REQUIRED]
-        -h: Display this help"
-                exit
+		usage
                 ;;
-        :)
-                echo "option -$OPTARG needs an argument"
-                exit
-                ;;
-        esac
-done'
+	\?)
+		echo "Invalid option: $OPTARG" 1>&2
+		;;
+	:)
+		echo "option -$OPTARG needs an argument"
+		exit
+		;;
+	esac
+done
 
-#INITIAL DATA PROCESSING
-#clear old data
-#rm -rf data/*
+if [ -z "$captureDir" ]; then
+	echo "ERROR: supply a directory to read pcaps from"
+	echo ""
+	usage
+fi
 
 #clear pcaps from the ringbuffer directory
 #rm ringbuffer/*
@@ -63,9 +74,9 @@ done'
 #cp ~/a/directory/*.cap ringbuffer/
 
 #start capturing data from the wireless adapter to the ringbuffer
-#tshark -i wlxc83a35c6c07a -f 'subtype probereq ' -w ringbuffer/probes -b duration:60 -b files:5 2> /dev/null &
+#tshark -i $networkInterface -f 'subtype probereq ' -w ringbuffer/probes -b duration:60 -b files:5 2> /dev/null &
 #alternate with no ringbuffer
-#tshark -i wlxc83a35c6c07a -f 'subtype probereq ' -w ringbuffer/probes 2> /dev/null &
+#tshark -i $networkInterface -f 'subtype probereq ' -w ringbuffer/probes 2> /dev/null &
 
 #wait for tshark to write something to the ringbuffer dir before continuing
 : '
@@ -97,14 +108,14 @@ do
 pcap_processing () {
 
 	#clear profile data from previous runs
-	rm -rf data/*
+	rm data/*
 
 	#do some actions for each capture file currently in the ringbuffer
-	for i in $( ls ringbuffer/ );
+	for i in $( ls $captureDir/ );
 	do
 		#for each capture, output only the data we want
 		#Source MAC and SSID
-		for j in $( tshark -r ringbuffer/$i -Y 'wlan.fc.type_subtype == 0x0004' -Nn 2> /dev/null | grep -v 'SSID=Broadcast$' | cut -d '.' -f 2- | cut -d ' ' -f 2,12- | sed 's/ SSID=/,SSID=/g' | egrep -v "\\\001|\\\002|\\\003|\\\004|\\\005|\\\006|\\\016|\\\017|\\\020|\\\021|\\\022|\\\023|\\\024|\\\025|\\\026|\\\027|\\\030|\\\031|\\\032|\\\033|\\\034|\\\035|\\\036|\\\037|\\\277|\\\357" | sort -u ) 
+		for j in $( tshark -r $captureDir/$i -Y 'wlan.fc.type_subtype == 0x0004' -Nn 2> /dev/null | egrep -v 'SSID=Broadcast$|\[Malformed Packet\]$' | cut -d '.' -f 2- | cut -d ' ' -f 2,12- | sed 's/ SSID=/,SSID=/g' | egrep -v "\\\001|\\\002|\\\003|\\\004|\\\005|\\\006|\\\016|\\\017|\\\020|\\\021|\\\022|\\\023|\\\024|\\\025|\\\026|\\\027|\\\030|\\\031|\\\032|\\\033|\\\034|\\\035|\\\036|\\\037|\\\277|\\\357" | sort -u ) 
 		do
 			echo $j >> data/$i.compressed
 			#also create a file for each source mac from each capture file
@@ -152,9 +163,8 @@ geolocation () {
 }
 
 #DEVICE PROFILING
-# place SSID probes from each source MAC in it's own file 
-# ensure that only uniq entries are in each file
-
+# place SSID probes from each source MAC in its own file 
+# ensure that only unique entries are in each file
 profile_gen () {
 	for i in $(cat data/all.compressed )
 	do 
@@ -187,10 +197,10 @@ html_gen () {
 			do 
 				#create a variable for all this shit 
 				#because we're going to be using it a LOT
-				data=`grep ":\"$j\"," location.db | grep -v "\"trilat\":NULL,\"trilong\":NULL,"`
-				ssid=`echo $data | cut -d , -f 3 | sed -e 's/\"ssid\":"//g' -e 's/\"$//g'`
+				data=$(grep ":\"$j\"," location.db | grep -v "\"trilat\":NULL,\"trilong\":NULL,")
+				ssid=$(echo $data | cut -d , -f 3 | sed -e 's/\"ssid\":"//g' -e 's/\"$//g')
 				#display the current lat,lng
-				latlng=`echo $data | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g'`
+				latlng=$(echo $data | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
 				#if the current SSID does not have google maps photo
 				if ls html/$ssid.png 1> /dev/null 2>&1
 				then
@@ -233,8 +243,8 @@ html_gen () {
 		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> html/$mac.html
 		                	fi
 					#add the image to the profile
-					address=$(grep $n location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
-					latlng=$(grep $n location.db | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g' )
+					address=$(grep \"$n\" location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
+					latlng=$(grep \"$n\" location.db | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g' )
 					echo -n "<td><h3>$n<h3>$latlng<h3>$address<img src=\"$n.png\"></td>" >> html/$mac.html
 					#echo -n "<tr><td rowspan=\"3\"><img src=\"$n.png\"</th><td>SSID: $n</td></tr><tr><td>COORDINATE: $latlng</td></tr><tr><td>ADDRESS: $address</td></tr>" >> html/$mac.html
 		                fi
