@@ -3,39 +3,49 @@
 #TODO
 
 #PRIORITY
-#Query within N miles of Y coordinate
 #Behavioral profile DB seed
 #Behavioral profile info in report
 #Plaintext report option
 #Centralized report file
+#Fix NULL bug
+#Determine if an address is commercial or residential
 
 #BACK BURNER
 #update report display format
 #use sed to update report with new images
-#use parallel where possible, script is far too linear
+#use parallel where possible
+#	location lookups
+#	profile creation
 #optimize new SSID sorting per mac
 #fix NULL display bug
 #maybe force each run to create a new results directory
+#add distance modifier for bounding search
 
 #set the internal field separator to newlines only
 IFS=$'\n'
 
 #Initialize variables
 WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:78398fe46316092e08c3838355cad0e8'
+#userLocation='42.497831,-83.195406'
+userLocation=''
 
 usage() { 
 	echo "Usage:  bash probespy.sh -c <dir>" 1>&2
 	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
 	echo "Options:" 1>&2
 	echo "-c: The directory to read pcap files from" 1>&2
-	echo "-i: The network interface to capture packets on" 1>&2
+#	echo "-i: The network interface to capture packets on" 1>&2
+	echo "-d: The directory to write the current report to" 1>&2
+	echo "-l: The location to bound our SSID search to" 1>&2
+#	echo "	current functionality defaults to a .5 degree" 1>&2
+#	echo "	bounded box in all directions." 1>&2
 	echo "-h: Display this help" 1>&2
 	exit 1 
 }
 
 #Defining script arguments
 #work in progress
-while getopts :i:c:d:h option;
+while getopts :i:c:d:l:h option;
 do
         case $option in
         i)
@@ -46,6 +56,9 @@ do
 		;;
 	d)
 		reportDir=$OPTARG
+		;;
+	l)
+		userLocation=$OPTARG
 		;;
         h)
 		usage
@@ -111,8 +124,9 @@ pcap_processing () {
 	rm data/*
 
 	#do some actions for each capture file currently in the ringbuffer
-	for i in $( ls $captureDir/ );
+	for i in $( ls $captureDir/ | grep .cap );
 	do
+		echo 'Processing '$i
 		#for each capture, output only the data we want
 		#Source MAC and SSID
 		for j in $( tshark -r $captureDir/$i -Y 'wlan.fc.type_subtype == 0x0004' -Nn 2> /dev/null | egrep -v 'SSID=Broadcast$|\[Malformed Packet\]$' | cut -d '.' -f 2- | cut -d ' ' -f 2,12- | sed 's/ SSID=/,SSID=/g' | egrep -v "\\\001|\\\002|\\\003|\\\004|\\\005|\\\006|\\\016|\\\017|\\\020|\\\021|\\\022|\\\023|\\\024|\\\025|\\\026|\\\027|\\\030|\\\031|\\\032|\\\033|\\\034|\\\035|\\\036|\\\037|\\\277|\\\357" | sort -u ) 
@@ -122,7 +136,8 @@ pcap_processing () {
 			touch data/$(echo $j | cut -d , -f 1).mac
 		done
 	done
-
+	
+	echo Compressing results
 	#Create a sorted file of all compressed data
 	cat data/*.compressed | sort -u > data/all.compressed
 }
@@ -138,19 +153,41 @@ geolocation () {
 		if [ -z "$(grep "\"ssid\"\:\"$i\"" location.db)" ]
 		then
 		        #entry is new
-		        echo $i
+		        echo -n $i
 		        #run query for the current SSID by wigle
 		        #at this time, since we haven't determined better criteria, only 
 		        #       keep entries that return one network            
-		        wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+		        if [ -z $userLocation ]
+			then
+				wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+			else
+				#we're being pretty lazy with our coordinate bounds here
+				# I don't want to do the math atm and I don't have a tool or algorithm handy
+				# that will translate miles/km to lat/lng degrees. Right now I'm just calculating
+				# .5 degrees up and down for the stated coordinate. This is about 69 miles, which
+				# seems like a reasonable search radius to me.
+				lat=$(echo $userLocation | cut -d , -f 1)
+				lng=$(echo $userLocation | cut -d , -f 2)
+				latlow=$(echo "$lat-.5" | bc)
+				lathigh=$(echo "$lat+.5" | bc)
+				lnglow=$(echo "$lng-.5" | bc)
+				lnghigh=$(echo "$lng+.5" | bc)
+
+				#lat/lng is not placed dynamicaly at this time, so these location settings
+				# will only work in the north american lat/lng quadrant
+				wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+			fi
+			
 		        if [ -z "$wigle" ]
 		        then
 		                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> location.db
+				echo ""
 		        else
 		                echo -n $wigle >> location.db
 				coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
 				address=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates | grep formatted_address | head -n1 | sed -e 's/.*:\ /,/g' -e 's/,$//g')
 				echo $address >> location.db 
+				echo "	:LOCATED"
 		        fi
 			#sleep a little between queries because we don't want to be dicks
 		        #DO WE?
@@ -158,7 +195,9 @@ geolocation () {
 			#sleep 5
 		fi
 	done
-
+	
+	echo Trimming the database
+	sort -u -o location.db location.db
 	echo -----------------------------SSID lookup complete--------------------------------
 }
 
@@ -179,7 +218,8 @@ html_gen () {
 
 	#generate a default display.html so there's always something 
 	#for the active page to refresh to
-	echo "<html><meta http-equiv="refresh" content="5"></head><body style="background-color\:black\;"><center><h1 style="color\:green\;font-family\:courier\;">BEAR WITH US<P>TECHNICAL DIFFICULTIES</h1><img src='../giphy.gif'><img src='../putin.jpeg'><img src='../giphy.gif'></center></html>" > html/display.html
+	#this is decommissioned for now
+	#echo "<html><meta http-equiv="refresh" content="5"></head><body style="background-color\:black\;"><center><h1 style="color\:green\;font-family\:courier\;">BEAR WITH US<P>TECHNICAL DIFFICULTIES</h1><img src='../giphy.gif'><img src='../putin.jpeg'><img src='../giphy.gif'></center></html>" > html/display.html
 
 	#perform these actions on each .mac profile
 	for i in $( ls data/*.mac)
@@ -231,7 +271,7 @@ html_gen () {
 
 
 				#if an image exists for this network, add it to the html
-				if [ -z $(ls html/*.png | grep "$n") ]
+				if [ -z "$(ls html/*.png | grep "$n")" ]
 		                then
 		                        :
 		                else
