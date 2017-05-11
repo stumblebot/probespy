@@ -17,15 +17,13 @@
 #	location lookups
 #	profile creation
 #optimize new SSID sorting per mac
-#fix NULL display bug
-#maybe force each run to create a new results directory
 #add distance modifier for bounding search
 
 #set the internal field separator to newlines only
 IFS=$'\n'
 
 #Initialize variables
-WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:78398fe46316092e08c3838355cad0e8'
+WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c696f'
 #userLocation='42.497831,-83.195406'
 userLocation=''
 
@@ -79,6 +77,16 @@ if [ -z "$captureDir" ]; then
 	usage
 fi
 
+if [ -z "$reportDir" ]; then
+	echo "ERROR: supply a directory to write report results"
+	echo ""
+	usage
+fi
+
+#INITIALIZE MORE VARIABLES
+dataDir=$(echo $reportDir/data/)
+htmlDir=$(echo $reportDir/html/)
+
 #clear pcaps from the ringbuffer directory
 #rm ringbuffer/*
 
@@ -117,11 +125,20 @@ while [ 1 -eq 1 ]
 do
 #'
 
+
+report_directory (){
+	mkdir -p $dataDir
+	mkdir -p $htmlDir
+}
+
+
+
 #PCAP PROCESSING FUNCTION
 pcap_processing () {
 
 	#clear profile data from previous runs
-	rm data/*
+	rm -f $dataDir/*.mac
+	rm -f $dataDir/*.compressed
 
 	#do some actions for each capture file currently in the ringbuffer
 	for i in $( ls $captureDir/ | grep .cap );
@@ -131,15 +148,15 @@ pcap_processing () {
 		#Source MAC and SSID
 		for j in $( tshark -r $captureDir/$i -Y 'wlan.fc.type_subtype == 0x0004' -Nn 2> /dev/null | egrep -v 'SSID=Broadcast$|\[Malformed Packet\]$' | cut -d '.' -f 2- | cut -d ' ' -f 2,12- | sed 's/ SSID=/,SSID=/g' | egrep -v "\\\001|\\\002|\\\003|\\\004|\\\005|\\\006|\\\016|\\\017|\\\020|\\\021|\\\022|\\\023|\\\024|\\\025|\\\026|\\\027|\\\030|\\\031|\\\032|\\\033|\\\034|\\\035|\\\036|\\\037|\\\277|\\\357" | sort -u ) 
 		do
-			echo $j >> data/$i.compressed
+			echo $j >> $dataDir/$i.compressed
 			#also create a file for each source mac from each capture file
-			touch data/$(echo $j | cut -d , -f 1).mac
+			touch $dataDir/$(echo $j | cut -d , -f 1).mac
 		done
 	done
 	
 	echo Compressing results
 	#Create a sorted file of all compressed data
-	cat data/*.compressed | sort -u > data/all.compressed
+	cat $dataDir/*.compressed | sort -u > $dataDir/all.compressed
 }
 
 #GEOLOCATION
@@ -148,9 +165,9 @@ geolocation () {
 
 	#run a wigle query for all SSIDs listed in all.compressed
 	#urlencode spaces with sed because curl bitches at you otherwise
-	for i in $(cat data/all.compressed | cut -d = -f 2- | sort -u );
+	for i in $(cat $dataDir/all.compressed | cut -d = -f 2- | sort -u );
 	do
-		if [ -z "$(grep "\"ssid\"\:\"$i\"" location.db)" ]
+		if [ -z "$(grep "\"ssid\"\:\"$i\"" $dataDir/location.db)" ]
 		then
 		        #entry is new
 		        echo -n $i
@@ -180,13 +197,13 @@ geolocation () {
 			
 		        if [ -z "$wigle" ]
 		        then
-		                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> location.db
+		                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> $dataDir/location.db
 				echo ""
 		        else
-		                echo -n $wigle >> location.db
+		                echo -n $wigle >> $dataDir/location.db
 				coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
 				address=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates | grep formatted_address | head -n1 | sed -e 's/.*:\ /,/g' -e 's/,$//g')
-				echo $address >> location.db 
+				echo $address >> $dataDir/location.db 
 				echo "	:LOCATED"
 		        fi
 			#sleep a little between queries because we don't want to be dicks
@@ -196,38 +213,41 @@ geolocation () {
 		fi
 	done
 	
-	echo Trimming the database
-	sort -u -o location.db location.db
 	echo -----------------------------SSID lookup complete--------------------------------
+
+	echo Trimming the database
+        sort -u -o $dataDir/location.db $dataDir/location.db
 }
 
 #DEVICE PROFILING
 # place SSID probes from each source MAC in its own file 
 # ensure that only unique entries are in each file
 profile_gen () {
-	for i in $(cat data/all.compressed )
+	for i in $(cat $dataDir/all.compressed )
 	do 
-		echo $(echo $i | cut -d , -f 2) >> data/$(echo $i | cut -d , -f 1).mac
+		echo $(echo $i | cut -d , -f 2) >> $dataDir/$(echo $i | cut -d , -f 1).mac
 	done
 }
 
 #HTML GENERATION FUNCTION
 html_gen () {
 	#clear old html files
-	rm html/*.html
+	rm -f $htmlDir/*.html
 
+	echo ------------------------------Generating profiles--------------------------------
 	#generate a default display.html so there's always something 
 	#for the active page to refresh to
 	#this is decommissioned for now
 	#echo "<html><meta http-equiv="refresh" content="5"></head><body style="background-color\:black\;"><center><h1 style="color\:green\;font-family\:courier\;">BEAR WITH US<P>TECHNICAL DIFFICULTIES</h1><img src='../giphy.gif'><img src='../putin.jpeg'><img src='../giphy.gif'></center></html>" > html/display.html
 
 	#perform these actions on each .mac profile
-	for i in $( ls data/*.mac)
-	do 
+	for i in $( ls $dataDir/*.mac)
+	do
+		echo -n .
+		#echo $i
 		#woo variables because we reuse them all the time
-		mac=$(echo $i | cut -d \/ -f 2 | cut -d . -f 1)
+		mac=$(echo $i |  sed 's/.*\///g' | cut -d . -f 1)
 		manufacturer=$(grep -i $(echo $mac | cut -d : -f -3 | sed 's/://g' ) /usr/share/ieee-data/oui.txt | cut -d '	' -f 3)
-
 		#apply the following actions only on .mac profiles with more than one SSID
 		if [ "$(cat $i | wc -l)" -gt 1 ]
 		then 
@@ -237,12 +257,12 @@ html_gen () {
 			do 
 				#create a variable for all this shit 
 				#because we're going to be using it a LOT
-				data=$(grep ":\"$j\"," location.db | grep -v "\"trilat\":NULL,\"trilong\":NULL,")
+				data=$(grep ":\"$j\"," $dataDir/location.db | grep -v "\"trilat\":NULL,\"trilong\":NULL,")
 				ssid=$(echo $data | cut -d , -f 3 | sed -e 's/\"ssid\":"//g' -e 's/\"$//g')
 				#display the current lat,lng
 				latlng=$(echo $data | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
 				#if the current SSID does not have google maps photo
-				if ls html/$ssid.png 1> /dev/null 2>&1
+				if ls $htmlDir/$ssid.png 1> /dev/null 2>&1
 				then
 					#do nothing, file exists
 					:
@@ -254,7 +274,7 @@ html_gen () {
 					then
 						:
 					else
-						wget -q https://maps.googleapis.com/maps/api/staticmap?markers=color:red%7Clabel:$ssid%7C$latlng\&zoom=13\&size=400x400\&maptype=roadmap -O html/$ssid.png
+						wget -q https://maps.googleapis.com/maps/api/staticmap?markers=color:red%7Clabel:$ssid%7C$latlng\&zoom=13\&size=400x400\&maptype=roadmap -O $htmlDir/$ssid.png
 					fi
 				fi
 			done
@@ -271,37 +291,38 @@ html_gen () {
 
 
 				#if an image exists for this network, add it to the html
-				if [ -z "$(ls html/*.png | grep "$n")" ]
+				if [ -z "$(ls $htmlDir/*.png  2>/dev/null | grep "$n")" ]
 		                then
 		                        :
 		                else
 					#if we haven't created an html file for this
 					# profile yet, add the boilerplate header
-					if [ -z "$(grep $mac html/*html)" ]
+					if [ -z "$(grep $mac $htmlDir/*html  2>/dev/null)" ]
 		                	then
 						uniqueNets=$(cat $i | wc -l)
 		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> html/$mac.html
 		                	fi
 					#add the image to the profile
-					address=$(grep \"$n\" location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
-					latlng=$(grep \"$n\" location.db | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g' )
-					echo -n "<td><h3>$n<h3>$latlng<h3>$address<img src=\"$n.png\"></td>" >> html/$mac.html
+					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
+					latlng=$(grep \"$n\" $dataDir/location.db | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g' )
+					echo -n "<td><h3>$n<h3>$latlng<h3>$address<img src=\"$n.png\"></td>" >> $htmlDir/$mac.html
 					#echo -n "<tr><td rowspan=\"3\"><img src=\"$n.png\"</th><td>SSID: $n</td></tr><tr><td>COORDINATE: $latlng</td></tr><tr><td>ADDRESS: $address</td></tr>" >> html/$mac.html
 		                fi
 			done
 		fi
 
 		#now that the profile has been fully generated, replace placeholder for number of located networks with the actual value
-		if [ -z "$(grep $mac html/*html)" ]
+		if [ -z "$(grep $mac $htmlDir/*html 2>/dev/null )" ]
 		then
 			:
 		else
-			locatedNets=$(sed 's/\.png/.png\n/g' html/$mac.html  | wc -l)
+			locatedNets=$(sed 's/\.png/.png\n/g' $htmlDir/$mac.html  2>/dev/null | wc -l)
 			if [ $locatedNets -ne 0 ]
 			then
-				sed -i -e "s/LOCATED_NETS_STRING_HERE/$locatedNets/" html/$mac.html
+				sed -i -e "s/LOCATED_NETS_STRING_HERE/$locatedNets/" $htmlDir/$mac.html
 			fi
 		fi
+		#echo -n .
 	done
 }
 
@@ -312,8 +333,9 @@ html_gen () {
 #done
 
 #CALL FUNCTIONS TO DO THINGS!
-pcap_processing
-geolocation
+report_directory
+#pcap_processing
+#geolocation
 profile_gen
 html_gen
 
