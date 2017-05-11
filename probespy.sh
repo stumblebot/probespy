@@ -161,7 +161,7 @@ pcap_processing () {
 
 #GEOLOCATION
 geolocation () {
-	echo -------------------------------Begin SSID lookup---------------------------------
+	echo -------------------------------Begin SSID Lookup---------------------------------
 
 	#run a wigle query for all SSIDs listed in all.compressed
 	#urlencode spaces with sed because curl bitches at you otherwise
@@ -213,7 +213,7 @@ geolocation () {
 		fi
 	done
 	
-	echo -----------------------------SSID lookup complete--------------------------------
+	echo -----------------------------SSID Lookup Complete--------------------------------
 
 	echo Trimming the database
         sort -u -o $dataDir/location.db $dataDir/location.db
@@ -227,6 +227,11 @@ profile_gen () {
 	do 
 		echo $(echo $i | cut -d , -f 2) >> $dataDir/$(echo $i | cut -d , -f 1).mac
 	done
+
+	for i in $(ls $dataDir/*.mac)
+	do
+		sort -u -o $i $i
+	done
 }
 
 #HTML GENERATION FUNCTION
@@ -234,7 +239,7 @@ html_gen () {
 	#clear old html files
 	rm -f $htmlDir/*.html
 
-	echo ------------------------------Generating profiles--------------------------------
+	echo ------------------------------Generating Profiles--------------------------------
 	#generate a default display.html so there's always something 
 	#for the active page to refresh to
 	#this is decommissioned for now
@@ -244,7 +249,6 @@ html_gen () {
 	for i in $( ls $dataDir/*.mac)
 	do
 		echo -n .
-		#echo $i
 		#woo variables because we reuse them all the time
 		mac=$(echo $i |  sed 's/.*\///g' | cut -d . -f 1)
 		manufacturer=$(grep -i $(echo $mac | cut -d : -f -3 | sed 's/://g' ) /usr/share/ieee-data/oui.txt | cut -d '	' -f 3)
@@ -280,7 +284,7 @@ html_gen () {
 			done
 
 	
-			#generate html page	
+			#generate html page
 			#for each SSID in this .mac profile
 			for n in $(cat $i | cut -d = -f 2-)
 			do
@@ -291,7 +295,7 @@ html_gen () {
 
 
 				#if an image exists for this network, add it to the html
-				if [ -z "$(ls $htmlDir/*.png  2>/dev/null | grep "$n")" ]
+				if [ -z "$(ls $htmlDir/*.png  2>/dev/null | grep "\/$n.png")" ]
 		                then
 		                        :
 		                else
@@ -300,7 +304,7 @@ html_gen () {
 					if [ -z "$(grep $mac $htmlDir/*html  2>/dev/null)" ]
 		                	then
 						uniqueNets=$(cat $i | wc -l)
-		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> html/$mac.html
+		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> $htmlDir/$mac.html
 		                	fi
 					#add the image to the profile
 					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
@@ -322,8 +326,11 @@ html_gen () {
 				sed -i -e "s/LOCATED_NETS_STRING_HERE/$locatedNets/" $htmlDir/$mac.html
 			fi
 		fi
-		#echo -n .
+		
+		echo -n .
 	done
+	echo ''
+	echo -------------------------------Profiles Complete---------------------------------
 }
 
 #remove all created profile .html files. Keep downloaded images so we're not wasteful
@@ -334,8 +341,8 @@ html_gen () {
 
 #CALL FUNCTIONS TO DO THINGS!
 report_directory
-#pcap_processing
-#geolocation
+pcap_processing
+geolocation
 profile_gen
 html_gen
 
