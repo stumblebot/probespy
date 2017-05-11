@@ -3,20 +3,17 @@
 #TODO
 
 #PRIORITY
-#Behavioral profile DB seed
-#Behavioral profile info in report
 #Plaintext report option
 #Centralized report file
-#Fix NULL bug
 #Determine if an address is commercial or residential
 
 #BACK BURNER
+#re-integrate direct capture from probespy
 #update report display format
 #use sed to update report with new images
 #use parallel where possible
 #	location lookups
 #	profile creation
-#optimize new SSID sorting per mac
 #add distance modifier for bounding search
 
 #set the internal field separator to newlines only
@@ -24,12 +21,13 @@ IFS=$'\n'
 
 #Initialize variables
 WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c696f'
-#userLocation='42.497831,-83.195406'
 userLocation=''
 
-usage() { 
-	echo "Usage:  bash probespy.sh -c <dir>" 1>&2
-	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
+usage() {
+./probespy.sh -c ~/wireless/public-collection-2/ -l "42.497831,-83.195406" -d pub_collect_2 
+	echo "Usage:  bash probespy.sh -c <dir> -d <dir>" 1>&2
+	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\">" 1>&2
+#	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
 	echo "Options:" 1>&2
 	echo "-c: The directory to read pcap files from" 1>&2
 #	echo "-i: The network interface to capture packets on" 1>&2
@@ -304,7 +302,7 @@ html_gen () {
 					if [ -z "$(grep $mac $htmlDir/*html  2>/dev/null)" ]
 		                	then
 						uniqueNets=$(cat $i | wc -l)
-		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> $htmlDir/$mac.html
+		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; } p {color: green; font-family: courier; } ul {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> $htmlDir/$mac.html
 		                	fi
 					#add the image to the profile
 					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
@@ -325,6 +323,13 @@ html_gen () {
 			then
 				sed -i -e "s/LOCATED_NETS_STRING_HERE/$locatedNets/" $htmlDir/$mac.html
 			fi
+
+			echo "<p><p>Behavioral Profile<ul>" >> $htmlDir/$mac.html
+			cat $i | cut -d = -f 2- | while read net
+			do 
+				grep "^$net:" network_meta_info.txt | sed 's/^/<li>/g' >> $htmlDir/$mac.html
+			done
+			echo "</ul></body></html>" >> $htmlDir/$mac.html
 		fi
 		
 		echo -n .
