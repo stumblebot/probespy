@@ -24,7 +24,6 @@ WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c6
 userLocation=''
 
 usage() {
-./probespy.sh -c ~/wireless/public-collection-2/ -l "42.497831,-83.195406" -d pub_collect_2 
 	echo "Usage:  bash probespy.sh -c <dir> -d <dir>" 1>&2
 	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\">" 1>&2
 #	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
