@@ -1,0 +1,38 @@
+Boingo Hotspot: Airport wifi. Traveller.
+DeltaSkyClub: Airport wifi. Traveller. Delta Airlines Customer.
+Detroit Airport Wi-Fi: Airport wifi. Traveller. Visited DTW Airport.
+FairField Inn_GUEST: Hotel wifi. Traveller. FairField Inn Customer.
+Marriott_Guest: Hotel wifi. Traveller. FairField Inn Customer.
+ResidenceInn_GUEST: Hotel wifi. Traveller. FairField Inn Customer.
+City of Minneapolis Public WiFi: Traveller. Visited Minneapolis. 
+gogoinflight: Traveller. Airplane wifi.
+Loews_Guest: Loews Customer.
+_Free_ORD_Wi-Fi: Traveller. Visited ORD Airport.
+Sheraton-Guestrooms: Traveller. Sheraton Customer. Hotel wifi.
+xfinitywifi: ISP Shared wifi. Potential Xfinity Customer.
+hhonors: Hotel wifi. Traveller. Hilton Customer.
+HI Express: Hotel wifi. Traveller. Holiday Inn Customer.
+PANERA: Restaraunt wifi. Panera Bread Customer
+Apple Store: Retail wifi. Apple Customer.
+Quality Inn and Suites: Hotel wifi. Traveller. Quality Inn Customer.
+attwifi: ISP Shared wifi. Potential AT&T Customer.
+CountryInnAndSuites: Hotel wifi. Traveller. Country Inn and Suites Customer.
+Olgas Guest: Restaraunt wifi. Olgas Diner Customer.
+att-wifi: ISP Shared wifi. Potential AT&T Customer.
+Target Guest Wi-Fi: Retail wifi. Target Customer.
+Guest T-Mobile: ISP Shared wifi. Potential T-Mobile Customer.
+...GAP_FREE: Retail wifi. GAP Customer.
+ATL Free Wi-Fi: Airport wifi. Traveller. Visited ATL Airport.
+GSP-Public-WiFi: Airport wifi. Traveller. Visited GSP Airport.
+@Hyatt_WiFi: Hotel wifi. Traveller. Hyatt Customer.
+www.hotel-litz.de: Hotel wifi. Traveller. Hotel Litz Customer. Visited Langenargen, Germany.
+_LAX Free WiFi: Airport wifi. Traveller. Visited LAX Airport.
+Renaissance_GUEST: Hotel wifi. Traveller. Renaissance Customer.
+Courtyard_GUEST: Hotel wifi. Traveller. Courtyard Customer.
+hyatt: Hotel wifi. Traveller. Hyatt Customer.
+Hyatt_GUEST: Hotel wifi. Traveller. Hyatt Customer.
+Otopeni Airport: Airport wifi. Traveller. Visited Otopeni Airport, Romania.
+- DEN Airport Free WiFi: Airport wifi. Traveller. Visited DEN Airport.
+SEATAC-FREE-WIFI: Airport wifi. Traveller. Visited SEATAC Airport.
+Hyatt Guest Room: Hotel wifi. Traveller. Hyatt Customer.
+WestinGuestrooms: Hotel wifi. Traveller. Westin Customer.
