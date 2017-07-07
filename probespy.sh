@@ -15,6 +15,8 @@
 #	location lookups
 #	profile creation
 #add distance modifier for bounding search
+#active attacks??
+#Change maps lookups to use openstreetmaps instead of google
 
 #set the internal field separator to newlines only
 IFS=$'\n'
