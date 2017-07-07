@@ -19,8 +19,26 @@
 #set the internal field separator to newlines only
 IFS=$'\n'
 
-#Initialize variables
-WIGLE_API_KEY='AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c696f'
+#Initialize variables from probespy.conf
+#check if probespy.conf is present
+if [[ -z "$(ls probespy.conf 2>/dev/null)" ]];
+then 
+	echo probespy.conf could not be found
+else
+	echo found probespy.conf
+	#source conf file
+	. probespy.conf
+	if [[ -z "$(echo $WIGLE_API_KEY)" ]]
+	then
+		echo No WIGLE API key present. Please add a key to probespy.conf in the following format
+		echo
+		echo WIGLE_API_KEY=\'AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c696f\'
+	else	
+		echo WIGLE API key loaded
+	fi
+fi
+exit
+
 userLocation=''
 
 usage() {
@@ -32,8 +50,8 @@ usage() {
 #	echo "-i: The network interface to capture packets on" 1>&2
 	echo "-d: The directory to write the current report to" 1>&2
 	echo "-l: The location to bound our SSID search to" 1>&2
-#	echo "	current functionality defaults to a .5 degree" 1>&2
-#	echo "	bounded box in all directions." 1>&2
+	echo "	current functionality defaults to a .5 degree" 1>&2
+	echo "	bounded box in all directions." 1>&2
 	echo "-h: Display this help" 1>&2
 	exit 1 
 }
