@@ -27,29 +27,32 @@ if [[ -z "$(ls probespy.conf 2>/dev/null)" ]];
 then 
 	echo probespy.conf could not be found
 else
-	echo found probespy.conf
+	echo -n found probespy.conf
 	#source conf file
 	. probespy.conf
 	if [[ -z "$(echo $WIGLE_API_KEY)" ]]
 	then
+		echo
 		echo No WIGLE API key present. Please add a key to probespy.conf in the following format
 		echo
 		echo WIGLE_API_KEY=\'AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c696f\'
 	else	
-		echo WIGLE API key loaded
+		echo ...WIGLE API key loaded
 	fi
 fi
-exit
 
 userLocation=''
 
 usage() {
 	echo "Usage:  bash probespy.sh -c <dir> -d <dir>" 1>&2
 	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\">" 1>&2
+	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\"> -r <txt|html>" 1>&2
 #	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
 	echo "Options:" 1>&2
 	echo "-c: The directory to read pcap files from" 1>&2
 #	echo "-i: The network interface to capture packets on" 1>&2
+	echo "-r: Report output format" 1>&2
+	echo "	  Options: html or txt" 1>&2
 	echo "-d: The directory to write the current report to" 1>&2
 	echo "-l: The location to bound our SSID search to" 1>&2
 	echo "	current functionality defaults to a .5 degree" 1>&2
@@ -60,7 +63,7 @@ usage() {
 
 #Defining script arguments
 #work in progress
-while getopts :i:c:d:l:h option;
+while getopts :i:c:d:l:r:h option;
 do
         case $option in
         i)
@@ -68,6 +71,9 @@ do
 		;;
 	c)
 		captureDir=$OPTARG
+		;;
+	r)
+		reportFormat=$OPTARG
 		;;
 	d)
 		reportDir=$OPTARG
@@ -98,6 +104,25 @@ if [ -z "$reportDir" ]; then
 	echo "ERROR: supply a directory to write report results"
 	echo ""
 	usage
+fi
+
+if [ -z $reportFormat ]
+then
+	echo Report format was not set, Defaulting to TXT
+	echo Report will be printed to stdout
+elif [ $reportFormat == html ]
+then
+	echo Report format set to HTML
+	echo Report will be written to $reportDir
+elif [ $reportFormat == txt ]
+then
+	echo Report format set to TXT
+	echo Report will be printed to stdout
+else
+	echo Reporting format $reportFormat is not recognized
+	echo Please define a valid reporting format
+	usage
+	exit
 fi
 
 #INITIALIZE MORE VARIABLES
@@ -142,15 +167,18 @@ while [ 1 -eq 1 ]
 do
 #'
 
-
+###############################################################################
+# CREATE REPORTING DIRECTORIES
+###############################################################################
 report_directory (){
 	mkdir -p $dataDir
 	mkdir -p $htmlDir
 }
 
 
-
+###############################################################################
 #PCAP PROCESSING FUNCTION
+###############################################################################
 pcap_processing () {
 
 	#clear profile data from previous runs
@@ -176,7 +204,9 @@ pcap_processing () {
 	cat $dataDir/*.compressed | sort -u > $dataDir/all.compressed
 }
 
+###############################################################################
 #GEOLOCATION
+###############################################################################
 geolocation () {
 	echo -------------------------------Begin SSID Lookup---------------------------------
 
@@ -236,9 +266,11 @@ geolocation () {
         sort -u -o $dataDir/location.db $dataDir/location.db
 }
 
+###############################################################################
 #DEVICE PROFILING
 # place SSID probes from each source MAC in its own file 
 # ensure that only unique entries are in each file
+###############################################################################
 profile_gen () {
 	for i in $(cat $dataDir/all.compressed )
 	do 
@@ -251,7 +283,44 @@ profile_gen () {
 	done
 }
 
-#HTML GENERATION FUNCTION
+###############################################################################
+#TXT REPORT GENERATION FUNCTION
+###############################################################################
+txt_gen () {
+	for i in $(ls $dataDir/*.mac);
+	do
+        	for e in $(cat $i);
+        	do
+                	mac=$(echo $i | rev | cut -d \/ -f 1 | rev | cut -d . -f 1)
+               		ssid=$(echo $e | cut -d = -f 2)
+
+                	extended=$(grep "$ssid" $dataDir/location.db)
+                	if [ -z $(echo $extended | grep "\"trilat\"\:NULL\,\"trilong\"\:NULL\,") ]
+                	then
+                        	#network has lat/lng
+                        	ext=$(echo $extended | cut -d , -f 1,2-)
+                	else
+                        	#network has no lat/lng
+                        	#check for behavior data
+                        	behavior=$(grep "^$ssid:" network_meta_info.txt)
+                        	if [[ -z $behavior ]]
+                        	then
+                                	#no information is known about this network
+                                	ext=$(echo NO_DATA)
+                        	else
+                                	#a beavioral profile has been determined for this network
+                                	ext=$(echo $behavior | cut -d : -f 2-)
+                        	fi
+                	fi
+
+                	echo $mac:$ssid:$ext;
+        	done;
+	done
+}
+
+###############################################################################
+#HTML REPORT GENERATION FUNCTION
+###############################################################################
 html_gen () {
 	#clear old html files
 	rm -f $htmlDir/*.html
@@ -363,14 +432,28 @@ html_gen () {
 #	rm html/$(grep -v png $z | cut -d \> -f 4 | cut -d \< -f 1 | sed 's/$/.html/g')
 #done
 
+###############################################################################
 #CALL FUNCTIONS TO DO THINGS!
+###############################################################################
 report_directory
 pcap_processing
 geolocation
 profile_gen
-html_gen
 
+if [ -z $reportFormat ]
+then
+        txt_gen
+elif [ $reportFormat == html ]
+then
+	html_gen
+elif [ $reportFormat == txt ]
+then
+	txt_gen
+fi
+
+###############################################################################
 #CHILL FUNCTION
+###############################################################################
 chill_out () {
 #just chill for a second. jesus
 echo -n Chill out. Take a beat
