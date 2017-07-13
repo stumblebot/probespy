@@ -36,3 +36,25 @@ Otopeni Airport: Airport wifi. Traveller. Visited Otopeni Airport, Romania.
 SEATAC-FREE-WIFI: Airport wifi. Traveller. Visited SEATAC Airport.
 Hyatt Guest Room: Hotel wifi. Traveller. Hyatt Customer.
 WestinGuestrooms: Hotel wifi. Traveller. Westin Customer.
+Roeper Student and Guest: Edu wifi. 
+Belle Tire Free wiFi: Retail Wifi. Belle Tire Customer.
+BestBuy: Retail wifi. BestBuy Customer.
+BostonMkt_Guest: Restaraunt wifi. Boston Market Customer.
+C21 Guest: Century 21 Customer. 
+WholeFoodsMarket: Grocery wifi. Whole Foods Customer.
+Qdoba_Guest: Restaraunt wifi. Qdoba Customer.
+CARite-Public: Retail wifi. CARite Customer.
+HFHS.Guest: Hospital wifi.
+Ihopmanager: Restaraunt wifi. 
+KFC FREE WIFI: Restaraunt wifi. KFC Customer.
+kroger: Grocery wifi. Kroger Customer.
+Kroger Guest: Grocery wifi. Kroger Customer.
+KrogerWiFi: Grocery wifi. Kroger Customer.
+McCarran_WiFi: Airport wifi. Traveler. Visited LAS Airport.
+McDonalds Free WiFi: Restaraunt wifi. McDonalds customer.
+MicroCenterGuest: Retail wifi: MicroCenter Customer.
+Olgas Guest WiFi: Restaraunt wifi. Olgas Diner Customer.
+Origins Wi-Fi: Retail wifi. Origins Customer.
+PartyCity_Guest: Retail wifi. PartyCity Customer.
+Penn Station: Restaraunt wifi. Penn Station Sandwiches Customer.
+Schiphol_Airport_WiFi: Airport wifi. Traveller. Visited Amsterdam, Netherlands.
