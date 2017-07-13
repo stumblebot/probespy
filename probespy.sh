@@ -3,7 +3,6 @@
 #TODO
 
 #PRIORITY
-#Plaintext report option
 #Centralized report file
 #Determine if an address is commercial or residential
 
@@ -14,7 +13,6 @@
 #use parallel where possible
 #	location lookups
 #	profile creation
-#add distance modifier for bounding search
 #active attacks??
 #Change maps lookups to use openstreetmaps instead of google
 
@@ -51,19 +49,19 @@ usage() {
 	echo "Options:" 1>&2
 	echo "-c: The directory to read pcap files from" 1>&2
 #	echo "-i: The network interface to capture packets on" 1>&2
-	echo "-r: Report output format" 1>&2
+	echo "-f: Report output format" 1>&2
 	echo "	  Options: html or txt" 1>&2
 	echo "-d: The directory to write the current report to" 1>&2
 	echo "-l: The location to bound our SSID search to" 1>&2
-	echo "	current functionality defaults to a .5 degree" 1>&2
-	echo "	bounded box in all directions." 1>&2
+	echo "-r: The distance to search from the coordinate" 1>&2
+	echo "	  designated by -l" 1>&2
 	echo "-h: Display this help" 1>&2
 	exit 1 
 }
 
 #Defining script arguments
 #work in progress
-while getopts :i:c:d:l:r:h option;
+while getopts :i:c:f:d:l:r:g:h option;
 do
         case $option in
         i)
@@ -72,7 +70,7 @@ do
 	c)
 		captureDir=$OPTARG
 		;;
-	r)
+	f)
 		reportFormat=$OPTARG
 		;;
 	d)
@@ -80,6 +78,12 @@ do
 		;;
 	l)
 		userLocation=$OPTARG
+		;;
+	r)
+		searchRange=$OPTARG
+		;;
+	g)
+		clusterSearch=$OPTARG
 		;;
         h)
 		usage
@@ -94,18 +98,21 @@ do
 	esac
 done
 
+#Check for valid capture directory
 if [ -z "$captureDir" ]; then
 	echo "ERROR: supply a directory to read pcaps from"
 	echo ""
 	usage
 fi
 
+#Check for valid report directory
 if [ -z "$reportDir" ]; then
 	echo "ERROR: supply a directory to write report results"
 	echo ""
 	usage
 fi
 
+#Check for valid report format
 if [ -z $reportFormat ]
 then
 	echo Report format was not set, Defaulting to TXT
@@ -124,6 +131,17 @@ else
 	usage
 	exit
 fi
+
+#Check for valid user location
+if [ -z $userLocation ]
+then
+	echo No location has been set to search within
+else
+	echo -n Location has been set as: $userLocation
+fi
+
+echo \ with a range of $searchRange miles
+
 
 #INITIALIZE MORE VARIABLES
 dataDir=$(echo $reportDir/data/)
@@ -205,7 +223,7 @@ pcap_processing () {
 }
 
 ###############################################################################
-#GEOLOCATION
+#GEOLOCATION FUNCTION
 ###############################################################################
 geolocation () {
 	echo -------------------------------Begin SSID Lookup---------------------------------
@@ -225,17 +243,18 @@ geolocation () {
 			then
 				wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
 			else
-				#we're being pretty lazy with our coordinate bounds here
-				# I don't want to do the math atm and I don't have a tool or algorithm handy
-				# that will translate miles/km to lat/lng degrees. Right now I'm just calculating
-				# .5 degrees up and down for the stated coordinate. This is about 69 miles, which
-				# seems like a reasonable search radius to me.
+				#this isn't the RIGHT way to calc these distances, but it's pretty close most of the time 
+				# and I don't care that much about precision at the moment
+				
+				latRange=$(echo $searchRange/69.2 | bc -l)
+				lngRange=$(echo $searchRange/69.2 | bc -l)
+
 				lat=$(echo $userLocation | cut -d , -f 1)
 				lng=$(echo $userLocation | cut -d , -f 2)
-				latlow=$(echo "$lat-.5" | bc)
-				lathigh=$(echo "$lat+.5" | bc)
-				lnglow=$(echo "$lng-.5" | bc)
-				lnghigh=$(echo "$lng+.5" | bc)
+				latlow=$(echo "$lat-$latRange" | bc)
+				lathigh=$(echo "$lat+$latRange" | bc)
+				lnglow=$(echo "$lng-$lngRange" | bc)
+				lnghigh=$(echo "$lng+$lngRange" | bc)
 
 				#lat/lng is not placed dynamicaly at this time, so these location settings
 				# will only work in the north american lat/lng quadrant
@@ -253,10 +272,6 @@ geolocation () {
 				echo $address >> $dataDir/location.db 
 				echo "	:LOCATED"
 		        fi
-			#sleep a little between queries because we don't want to be dicks
-		        #DO WE?
-			#Actually we don't care because we're paying for this shit
-			#sleep 5
 		fi
 	done
 	
@@ -267,7 +282,7 @@ geolocation () {
 }
 
 ###############################################################################
-#DEVICE PROFILING
+#DEVICE PROFILING FUNCTION
 # place SSID probes from each source MAC in its own file 
 # ensure that only unique entries are in each file
 ###############################################################################
