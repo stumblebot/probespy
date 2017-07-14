@@ -229,7 +229,7 @@ pcap_processing () {
 }
 
 ###############################################################################
-#GEOLOCATION FUNCTION
+#MASTER GEOLOCATION FUNCTION
 ###############################################################################
 geolocation () {
 	#create the file location.db if it does not already exist
@@ -252,7 +252,7 @@ geolocation () {
 }
 
 ###############################################################################
-#GEOLOCATION FUNCTION
+#SSID GEOLOCATION FUNCTION
 ###############################################################################
 ssidGeolocation () {
 	#re-instantiate variables (required for parallelization)
@@ -263,7 +263,7 @@ ssidGeolocation () {
 	searchRange=$(echo $5)
 
 	#urlencode spaces with sed because curl bitches at you otherwise
-	if [ -z "$(grep "\"ssid\"\:\"$i\"" $dataDir/location.db)" ]
+	if [ -z "$(grep "\"ssid\"\:\"'$i'\"" $dataDir/location.db)" ]
 	then
 	        #entry is new
 	        echo -n $i
@@ -297,10 +297,9 @@ ssidGeolocation () {
 	                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> $dataDir/location.db
 			echo ""
 	        else
-	                echo -n $wigle >> $dataDir/location.db
 			coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
 			address=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates | grep formatted_address | head -n1 | sed -e 's/.*:\ /,/g' -e 's/,$//g')
-			echo $address >> $dataDir/location.db 
+			echo $wigle$address >> $dataDir/location.db 
 			echo "	:LOCATED"
 	        fi
 	fi
