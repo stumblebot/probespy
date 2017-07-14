@@ -43,8 +43,8 @@ userLocation=''
 
 usage() {
 	echo "Usage:  bash probespy.sh -c <dir> -d <dir>" 1>&2
-	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\">" 1>&2
-	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\"> -r <txt|html>" 1>&2
+	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\"> -r <miles>" 1>&2
+	echo "        bash probespy.sh -c <dir> -d <dir> -l <\"lat,lng\"> -r <miles> -f <txt|html>" 1>&2
 #	echo "        bash probespy.sh -c <dir> -i <iface>" 1>&2
 	echo "Options:" 1>&2
 	echo "-c: The directory to read pcap files from" 1>&2
