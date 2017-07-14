@@ -226,60 +226,81 @@ pcap_processing () {
 #GEOLOCATION FUNCTION
 ###############################################################################
 geolocation () {
-	echo -------------------------------Begin SSID Lookup---------------------------------
-
-	#run a wigle query for all SSIDs listed in all.compressed
-	#urlencode spaces with sed because curl bitches at you otherwise
-	for i in $(cat $dataDir/all.compressed | cut -d = -f 2- | sort -u );
-	do
-		if [ -z "$(grep "\"ssid\"\:\"$i\"" $dataDir/location.db)" ]
-		then
-		        #entry is new
-		        echo -n $i
-		        #run query for the current SSID by wigle
-		        #at this time, since we haven't determined better criteria, only 
-		        #       keep entries that return one network            
-		        if [ -z $userLocation ]
-			then
-				wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
-			else
-				#this isn't the RIGHT way to calc these distances, but it's pretty close most of the time 
-				# and I don't care that much about precision at the moment
-				
-				latRange=$(echo $searchRange/69.2 | bc -l)
-				lngRange=$(echo $searchRange/69.2 | bc -l)
-
-				lat=$(echo $userLocation | cut -d , -f 1)
-				lng=$(echo $userLocation | cut -d , -f 2)
-				latlow=$(echo "$lat-$latRange" | bc)
-				lathigh=$(echo "$lat+$latRange" | bc)
-				lnglow=$(echo "$lng-$lngRange" | bc)
-				lnghigh=$(echo "$lng+$lngRange" | bc)
-
-				#lat/lng is not placed dynamicaly at this time, so these location settings
-				# will only work in the north american lat/lng quadrant
-				wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
-			fi
-			
-		        if [ -z "$wigle" ]
-		        then
-		                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> $dataDir/location.db
-				echo ""
-		        else
-		                echo -n $wigle >> $dataDir/location.db
-				coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
-				address=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates | grep formatted_address | head -n1 | sed -e 's/.*:\ /,/g' -e 's/,$//g')
-				echo $address >> $dataDir/location.db 
-				echo "	:LOCATED"
-		        fi
-		fi
-	done
+	#create location.db if it does not already exist
+	if [ -z $(ls $dataDir/location.db) ];
+	then 
+		touch $dataDir/location.db
+	fi
 	
+	echo -------------------------------Begin SSID Lookup---------------------------------
+	#we need to pass some arguments to the other function in order for it to work
+	cat $dataDir/all.compressed | cut -d = -f 2- | sort -u | parallel --no-notice -j 10 ssidGeolocation {} $dataDir $userLocation $WIGLE_API_KEY $searchRange
+
 	echo -----------------------------SSID Lookup Complete--------------------------------
 
+	#remove duplicates and sort
 	echo Trimming the database
         sort -u -o $dataDir/location.db $dataDir/location.db
 }
+
+###############################################################################
+#GEOLOCATION FUNCTION
+###############################################################################
+ssidGeolocation () {
+	#re-instantiate variables (required for parallelization)
+	i=$(echo $1)
+	dataDir=$(echo $2)	
+	userLocation=$(echo $3)
+	WIGLE_API_KEY=$(echo $4)
+	searchRange=$(echo $5)
+
+	#run a wigle query for all SSIDs listed in all.compressed
+	#urlencode spaces with sed because curl bitches at you otherwise
+
+	if [ -z "$(grep "\"ssid\"\:\"$i\"" $dataDir/location.db)" ]
+	then
+	        #entry is new
+	        echo -n $i
+	        #run query for the current SSID by wigle
+	        #at this time, since we haven't determined better criteria, only 
+	        #       keep entries that return one network            
+	        if [ -z $userLocation ]
+		then
+			wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+		else
+			#this isn't the RIGHT way to calc these distances, but it's pretty close most of the time 
+			# and I don't care that much about precision at the moment
+			
+			latRange=$(echo $searchRange/69.2 | bc -l)
+			lngRange=$(echo $searchRange/69.2 | bc -l)
+
+			lat=$(echo $userLocation | cut -d , -f 1)
+			lng=$(echo $userLocation | cut -d , -f 2)
+			latlow=$(echo "$lat-$latRange" | bc)
+			lathigh=$(echo "$lat+$latRange" | bc)
+			lnglow=$(echo "$lng-$lngRange" | bc)
+			lnghigh=$(echo "$lng+$lngRange" | bc)
+
+			#lat/lng is not placed dynamicaly at this time, so these location settings
+			# will only work in the north american lat/lng quadrant
+			wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+		fi
+			
+	        if [ -z "$wigle" ]
+	        then
+	                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> $dataDir/location.db
+			echo ""
+	        else
+	                echo -n $wigle >> $dataDir/location.db
+			coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
+			address=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates | grep formatted_address | head -n1 | sed -e 's/.*:\ /,/g' -e 's/,$//g')
+			echo $address >> $dataDir/location.db 
+			echo "	:LOCATED"
+	        fi
+	fi
+}
+#function needs to be exported so parallel can interact with it
+export -f ssidGeolocation
 
 ###############################################################################
 #DEVICE PROFILING FUNCTION
