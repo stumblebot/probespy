@@ -10,9 +10,8 @@
 #re-integrate direct capture from probespy
 #update report display format
 #use sed to update report with new images
-#use parallel where possible
-#	location lookups
 #active attacks??
+# beacon honeypotting
 #Change maps lookups to use openstreetmaps instead of google
 
 #set the internal field separator to newlines only
@@ -147,6 +146,12 @@ echo ------------------------------------------------
 dataDir=$(echo $reportDir/data/)
 htmlDir=$(echo $reportDir/html/)
 
+
+###############################################################################
+#INTERFACE CAPTURE JUNK
+# This code is not in use right now, but may be helpful if/when I re-implement 
+# capturing probe requests from within probespy
+###############################################################################
 #clear pcaps from the ringbuffer directory
 #rm ringbuffer/*
 
@@ -184,9 +189,11 @@ echo
 while [ 1 -eq 1 ]
 do
 #'
+#END OF INTERFACE CAPTURE JUNK
+###############################################################################
 
 ###############################################################################
-# CREATE REPORTING DIRECTORIES
+#CREATE REPORTING DIRECTORIES
 ###############################################################################
 report_directory (){
 	mkdir -p $dataDir
@@ -203,12 +210,11 @@ pcap_processing () {
 	rm -f $dataDir/*.mac
 	rm -f $dataDir/*.compressed
 
-	#do some actions for each capture file currently in the ringbuffer
+	#do some actions for each pcap in the current captureDir
 	for i in $( ls $captureDir/ | grep .cap );
 	do
 		echo 'Processing '$i
-		#for each capture, output only the data we want
-		#Source MAC and SSID
+		#for each pcap, output only the data we want, the source MAC and SSID
 		for j in $( tshark -r $captureDir/$i -Y 'wlan.fc.type_subtype == 0x0004' -Nn 2> /dev/null | egrep -v 'SSID=Broadcast$|\[Malformed Packet\]$' | cut -d '.' -f 2- | cut -d ' ' -f 2,12- | sed 's/ SSID=/,SSID=/g' | egrep -v "\\\001|\\\002|\\\003|\\\004|\\\005|\\\006|\\\016|\\\017|\\\020|\\\021|\\\022|\\\023|\\\024|\\\025|\\\026|\\\027|\\\030|\\\031|\\\032|\\\033|\\\034|\\\035|\\\036|\\\037|\\\277|\\\357" | sort -u ) 
 		do
 			echo $j >> $dataDir/$i.compressed
@@ -218,7 +224,7 @@ pcap_processing () {
 	done
 	
 	echo Compressing results
-	#Create a sorted file of all compressed data
+	#Create a sorted, deduped file of all data
 	cat $dataDir/*.compressed | sort -u > $dataDir/all.compressed
 }
 
@@ -226,13 +232,15 @@ pcap_processing () {
 #GEOLOCATION FUNCTION
 ###############################################################################
 geolocation () {
-	#create location.db if it does not already exist
+	#create the file location.db if it does not already exist
 	if [ -z $(ls $dataDir/location.db) ];
 	then 
 		touch $dataDir/location.db
 	fi
 	
 	echo -------------------------------Begin SSID Lookup---------------------------------
+	
+	#run a wigle query for all SSIDs listed in all.compressed
 	#we need to pass some arguments to the other function in order for it to work
 	cat $dataDir/all.compressed | cut -d = -f 2- | sort -u | parallel --no-notice -j 10 ssidGeolocation {} $dataDir $userLocation $WIGLE_API_KEY $searchRange
 
@@ -254,9 +262,7 @@ ssidGeolocation () {
 	WIGLE_API_KEY=$(echo $4)
 	searchRange=$(echo $5)
 
-	#run a wigle query for all SSIDs listed in all.compressed
 	#urlencode spaces with sed because curl bitches at you otherwise
-
 	if [ -z "$(grep "\"ssid\"\:\"$i\"" $dataDir/location.db)" ]
 	then
 	        #entry is new
