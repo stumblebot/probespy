@@ -383,7 +383,6 @@ html_gen () {
 					fi
 				fi
 			done
-
 	
 			#generate html page
 			#for each SSID in this .mac profile
@@ -393,7 +392,6 @@ html_gen () {
 				then
 					manufacturer=$(echo UNKNOWN)
 				fi
-
 
 				#if an image exists for this network, add it to the html
 				if [ -z "$(ls $htmlDir/*.png  2>/dev/null | grep "\/$n.png")" ]
@@ -440,12 +438,6 @@ html_gen () {
 	echo ''
 	echo -------------------------------Profiles Complete---------------------------------
 }
-
-#remove all created profile .html files. Keep downloaded images so we're not wasteful
-#for z in $(ls html/*.html)
-#do
-#	rm html/$(grep -v png $z | cut -d \> -f 4 | cut -d \< -f 1 | sed 's/$/.html/g')
-#done
 
 ###############################################################################
 #CALL FUNCTIONS TO DO THINGS!
