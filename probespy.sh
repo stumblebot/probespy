@@ -12,7 +12,6 @@
 #use sed to update report with new images
 #use parallel where possible
 #	location lookups
-#	profile creation
 #active attacks??
 #Change maps lookups to use openstreetmaps instead of google
 
@@ -128,6 +127,7 @@ then
 else
 	echo Reporting format $reportFormat is not recognized
 	echo Please define a valid reporting format
+	echo ------------------------------------------------
 	usage
 	exit
 fi
@@ -141,7 +141,7 @@ else
 fi
 
 echo \ with a range of $searchRange miles
-
+echo ------------------------------------------------
 
 #INITIALIZE MORE VARIABLES
 dataDir=$(echo $reportDir/data/)
