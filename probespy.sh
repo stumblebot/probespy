@@ -261,18 +261,26 @@ ssidGeolocation () {
 	userLocation=$(echo $3)
 	WIGLE_API_KEY=$(echo $4)
 	searchRange=$(echo $5)
-
-	#urlencode spaces with sed because curl bitches at you otherwise
-	if [ -z "$(grep "\"ssid\"\:\"'$i'\"" $dataDir/location.db)" ]
+	
+	#sanitize control chars from bash because... I don't have a better way to fix the bug now
+	sanSSID=$(echo $i | sed -e 's/\*/\\*/g' \
+				-e 's/\[/\\[/g' \
+				-e 's/\]/\\]/g' \
+				-e 's/\&/\\&/g' )
+	if [ -z "$(grep -i "\"ssid\"\:\"$sanSSID\"" $dataDir/location.db)" ]
 	then
-	        #entry is new
-	        echo -n $i
+		#entry is new
+                echo -n $i
+
+		#urlencode spaces with sed because curl bitches at you otherwise
+                urlencodeSSID=$(echo $i | sed -e 's/ /%20/g' -e 's/\&/%26/g')
+
 	        #run query for the current SSID by wigle
 	        #at this time, since we haven't determined better criteria, only 
 	        #       keep entries that return one network            
 	        if [ -z $userLocation ]
 		then
-			wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+			wigle=`curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
 		else
 			#this isn't the RIGHT way to calc these distances, but it's pretty close most of the time 
 			# and I don't care that much about precision at the moment
@@ -289,7 +297,7 @@ ssidGeolocation () {
 
 			#lat/lng is not placed dynamicaly at this time, so these location settings
 			# will only work in the north american lat/lng quadrant
-			wigle=`curl -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$(echo $i | sed 's/ /%20/g')&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+			wigle=`curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
 		fi
 			
 	        if [ -z "$wigle" ]
@@ -314,7 +322,7 @@ export -f ssidGeolocation
 ###############################################################################
 profile_gen () {
 	for i in $(cat $dataDir/all.compressed )
-	do 
+	do
 		echo $(echo $i | cut -d , -f 2) >> $dataDir/$(echo $i | cut -d , -f 1).mac
 	done
 
