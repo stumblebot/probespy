@@ -21,7 +21,10 @@ IFS=$'\n'
 #check if probespy.conf is present
 if [[ -z "$(ls probespy.conf 2>/dev/null)" ]];
 then 
-	echo probespy.conf could not be found
+	echo probespy.conf could not be found. Please create probespy.conf, in the current directory
+	echo and add a WIGLE API key in the following format.
+	echo
+	echo WIGLE_API_KEY=\'AID0d903714c7d78b11a222c77b956d4200:e6c1b74909bdba1f331776e5b96c696f\'
 else
 	echo -n found probespy.conf
 	#source conf file
@@ -348,7 +351,7 @@ txt_gen () {
                 	if [ -z $(echo $extended | grep "\"trilat\"\:NULL\,\"trilong\"\:NULL\,") ]
                 	then
                         	#network has lat/lng
-                        	ext=$(echo $extended | cut -d , -f 1,2)
+                        	ext=$(echo $extended | cut -d , -f 1,2,4-)
                 	else
                         	#network has no lat/lng
                         	#check for behavior data
