@@ -1,60 +1,79 @@
-Boingo Hotspot: Airport wifi. Traveller.
-DeltaSkyClub: Airport wifi. Traveller. Delta Airlines Customer.
-Detroit Airport Wi-Fi: Airport wifi. Traveller. Visited DTW Airport.
-FairField Inn_GUEST: Hotel wifi. Traveller. FairField Inn Customer.
-Marriott_Guest: Hotel wifi. Traveller. FairField Inn Customer.
-ResidenceInn_GUEST: Hotel wifi. Traveller. FairField Inn Customer.
-City of Minneapolis Public WiFi: Traveller. Visited Minneapolis. 
-gogoinflight: Traveller. Airplane wifi.
-Loews_Guest: Loews Customer.
-_Free_ORD_Wi-Fi: Traveller. Visited ORD Airport.
-Sheraton-Guestrooms: Traveller. Sheraton Customer. Hotel wifi.
-xfinitywifi: ISP Shared wifi. Potential Xfinity Customer.
-hhonors: Hotel wifi. Traveller. Hilton Customer.
-HI Express: Hotel wifi. Traveller. Holiday Inn Customer.
-PANERA: Restaraunt wifi. Panera Bread Customer
+Air Canada: Airline wifi. Traveller. Air Canada Customer.
 Apple Store: Retail wifi. Apple Customer.
-Quality Inn and Suites: Hotel wifi. Traveller. Quality Inn Customer.
-attwifi: ISP Shared wifi. Potential AT&T Customer.
-CountryInnAndSuites: Hotel wifi. Traveller. Country Inn and Suites Customer.
-Olgas Guest: Restaraunt wifi. Olgas Diner Customer.
+ATL Free Wi-Fi: Airport wifi. Traveller. Visited ATL Airport, GA, USA.
 att-wifi: ISP Shared wifi. Potential AT&T Customer.
-Target Guest Wi-Fi: Retail wifi. Target Customer.
-Guest T-Mobile: ISP Shared wifi. Potential T-Mobile Customer.
-...GAP_FREE: Retail wifi. GAP Customer.
-ATL Free Wi-Fi: Airport wifi. Traveller. Visited ATL Airport.
-GSP-Public-WiFi: Airport wifi. Traveller. Visited GSP Airport.
-@Hyatt_WiFi: Hotel wifi. Traveller. Hyatt Customer.
-www.hotel-litz.de: Hotel wifi. Traveller. Hotel Litz Customer. Visited Langenargen, Germany.
-_LAX Free WiFi: Airport wifi. Traveller. Visited LAX Airport.
-Renaissance_GUEST: Hotel wifi. Traveller. Renaissance Customer.
-Courtyard_GUEST: Hotel wifi. Traveller. Courtyard Customer.
-hyatt: Hotel wifi. Traveller. Hyatt Customer.
-Hyatt_GUEST: Hotel wifi. Traveller. Hyatt Customer.
-Otopeni Airport: Airport wifi. Traveller. Visited Otopeni Airport, Romania.
-- DEN Airport Free WiFi: Airport wifi. Traveller. Visited DEN Airport.
-SEATAC-FREE-WIFI: Airport wifi. Traveller. Visited SEATAC Airport.
-Hyatt Guest Room: Hotel wifi. Traveller. Hyatt Customer.
-WestinGuestrooms: Hotel wifi. Traveller. Westin Customer.
-Roeper Student and Guest: Edu wifi. 
+attwifi: ISP Shared wifi. Potential AT&T Customer.
 Belle Tire Free wiFi: Retail Wifi. Belle Tire Customer.
 BestBuy: Retail wifi. BestBuy Customer.
+BlackHatUSA2017: BlackHat Briefings 2017 attendee. Visited Las Vegas, NV, USA.
+Boingo Hotspot: Airport wifi. Traveller.
 BostonMkt_Guest: Restaraunt wifi. Boston Market Customer.
 C21 Guest: Century 21 Customer. 
-WholeFoodsMarket: Grocery wifi. Whole Foods Customer.
-Qdoba_Guest: Restaraunt wifi. Qdoba Customer.
 CARite-Public: Retail wifi. CARite Customer.
+City of Minneapolis Public WiFi: Visited Minneapolis, MN, USA. 
+CMU: University wifi. Visited Carnegie Mellon University, PA, USA.
+Comfort_Suites: Hotel wifi. Traveller. Comfort Inn and Suites Customer.
+CountryInnAndSuites: Hotel wifi. Traveller. Country Inn and Suites Customer.
+Courtyard_GUEST: Hotel wifi. Traveller. Courtyard Customer.
+DefCon: Defcon attendee. Visited Las Vegas, .
+DefCon-Open: Defcon attendee. Visited Las Vegas. RENEGADE.
+DeltaSkyClub: Airport wifi. Traveller. Delta Airlines Customer.
+- DEN Airport Free WiFi: Airport wifi. Traveller. Visited DEN Airport, CO, USA.
+Detroit Airport Wi-Fi: Airport wifi. Traveller. Visited DTW Airport, MI, USA.
+Devonport City Wifi: Visited Devonport, Tasmania, Austrialia.
+FairField Inn_GUEST: Hotel wifi. Traveller. FairField Inn Customer.
+_Free_MDW_Wi-Fi: Traveller. Visited MDW Airport, IL, USA.
+_Free_ORD_Wi-Fi: Traveller. Visited ORD Airport, IL, USA.
+...GAP_FREE: Retail wifi. GAP Customer.
+gogoinflight: Traveller. Airplane wifi.
+GSP-Public-WiFi: Airport wifi. Traveller. Visited GSP Airport, SC, USA.
+Guest T-Mobile: ISP Shared wifi. Potential T-Mobile Customer.
+Helsinki Airport Free Wi-Fi: Traveller. Visited Helsinki Airport, Finland.
 HFHS.Guest: Hospital wifi.
+hhonors: Hotel wifi. Traveller. Hilton Customer.
+HI Express: Hotel wifi. Traveller. Holiday Inn Customer.
+Hyatt_GUEST: Hotel wifi. Traveller. Hyatt Customer.
+Hyatt Guest Room: Hotel wifi. Traveller. Hyatt Customer.
+hyatt: Hotel wifi. Traveller. Hyatt Customer.
+@Hyatt_WiFi: Hotel wifi. Traveller. Hyatt Customer.
 Ihopmanager: Restaraunt wifi. 
 KFC FREE WIFI: Restaraunt wifi. KFC Customer.
 kroger: Grocery wifi. Kroger Customer.
 Kroger Guest: Grocery wifi. Kroger Customer.
 KrogerWiFi: Grocery wifi. Kroger Customer.
-McCarran_WiFi: Airport wifi. Traveler. Visited LAS Airport.
+_LAX Free WiFi: Airport wifi. Traveller. Visited LAX Airport, CA, USA.
+Loews_Guest: Loews Customer.
+Marriott_Guest: Hotel wifi. Traveller. FairField Inn Customer.
+McCarran_WiFi: Airport wifi. Traveler. Visited LAS Airport, NV, USA.
 McDonalds Free WiFi: Restaraunt wifi. McDonalds customer.
+MGMResorts-WiFi: Hotel wifi. MGM resorts customer.
 MicroCenterGuest: Retail wifi: MicroCenter Customer.
+Oddfellows Cafe + Bar: Restaraunt wifi. Visited Seattle, WA, USA.
+Olgas Guest: Restaraunt wifi. Olgas Diner Customer.
 Olgas Guest WiFi: Restaraunt wifi. Olgas Diner Customer.
 Origins Wi-Fi: Retail wifi. Origins Customer.
+Otopeni Airport: Airport wifi. Traveller. Visited Otopeni Airport, Romania.
+PANERA: Restaraunt wifi. Panera Bread Customer
+Park Plaza County Hall: Hotel wifi. Visited London, United Kingdom.
 PartyCity_Guest: Retail wifi. PartyCity Customer.
 Penn Station: Restaraunt wifi. Penn Station Sandwiches Customer.
+Qdoba_Guest: Restaraunt wifi. Qdoba Customer.
+Quality Inn and Suites: Hotel wifi. Traveller. Quality Inn Customer.
+Renaissance_GUEST: Hotel wifi. Traveller. Renaissance Customer.
+ResidenceInn_GUEST: Hotel wifi. Traveller. FairField Inn Customer.
+Roeper Student and Guest: Edu wifi. 
 Schiphol_Airport_WiFi: Airport wifi. Traveller. Visited Amsterdam, Netherlands.
+SEATAC-FREE-WIFI: Airport wifi. Traveller. Visited SEATAC Airport, WA, USA.
+Sheraton-Guestrooms: Hotel wifi. Traveller. Sheraton Customer.
+Sheraton-Meeting Room: Hotel wifi. Traveler. Sheraton Customer.
+SouthwestWiFi: Airline wifi. Traveller. Southwest Customer.
+Target Guest Wi-Fi: Retail wifi. Target Customer.
+Toronto Pearson Wi-Fi: Airport wifi. Traveller. Visited 
+United_Wi-Fi: Airline wifi. Traveller. United Airlines customer.
+WestinGuestrooms: Hotel wifi. Traveller. Westin Customer.
+WholeFoodsMarket: Grocery wifi. Whole Foods Customer.
+WIFI_BEN_GURION_AIRPORT: Airport wifi. Traveller. Visited Ben Gurion Airport, Israel.
+#WiFi@Changi: Airport wifi. Traveller. Visited Changi Airport, Shanghai, China.
+www.hotel-litz.de: Hotel wifi. Traveller. Hotel Litz Customer. Visited Langenargen, Germany.
+xfinitywifi: ISP Shared wifi. Potential Xfinity Customer.
+YOW Free Wi-Fi: Airport wifi. Traveller. Visited YOW Airport, Ottawa, CA
