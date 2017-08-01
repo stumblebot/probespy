@@ -13,6 +13,9 @@
 #active attacks??
 # beacon honeypotting
 #Change maps lookups to use openstreetmaps instead of google
+#cluster search
+#turn on/off location lookup
+#sort a given run by profile mac address or SSID
 
 #set the internal field separator to newlines only
 IFS=$'\n'
@@ -61,7 +64,6 @@ usage() {
 }
 
 #Defining script arguments
-#work in progress
 while getopts :i:c:f:d:l:r:g:h option;
 do
         case $option in
@@ -452,7 +454,8 @@ html_gen () {
 			done
 		fi
 
-		#now that the profile has been fully generated, replace placeholder for number of located networks with the actual value
+		#now that the profile has been fully generated, replace placeholder 
+		#	for number of located networks with the actual value
 		if [ -z "$(grep $mac $htmlDir/*html 2>/dev/null )" ]
 		then
 			:
@@ -509,8 +512,6 @@ do
 done
 echo " Back to it"
 }
-
-#chill_out
 
 #continue looping
 #done
