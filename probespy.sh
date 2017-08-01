@@ -135,6 +135,7 @@ fi
 if [ -z $userLocation ]
 then
 	echo No location has been set to search within
+	userLocation='NOLOC'
 else
 	echo -n Location has been set as: $userLocation
 fi
@@ -278,7 +279,7 @@ ssidGeolocation () {
 	        #run query for the current SSID by wigle
 	        #at this time, since we haven't determined better criteria, only 
 	        #       keep entries that return one network            
-	        if [ -z $userLocation ]
+	        if [ $userLocation == 'NOLOC' ]
 		then
 			wigle=`curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
 		else
@@ -347,7 +348,7 @@ txt_gen () {
                 	if [ -z $(echo $extended | grep "\"trilat\"\:NULL\,\"trilong\"\:NULL\,") ]
                 	then
                         	#network has lat/lng
-                        	ext=$(echo $extended | cut -d , -f 1,2-)
+                        	ext=$(echo $extended | cut -d , -f 1,2)
                 	else
                         	#network has no lat/lng
                         	#check for behavior data
