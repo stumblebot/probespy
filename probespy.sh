@@ -3,13 +3,14 @@
 #TODO
 
 #PRIORITY
-#Centralized report file
+#Local database lookup via wigle export
 #Determine if an address is commercial or residential
 
 #BACK BURNER
+#Centralized report file
 #re-integrate direct capture from probespy
 #update report display format
-#use sed to update report with new images
+#use sed to update html report with new images
 #active attacks??
 # beacon honeypotting
 #Change maps lookups to use openstreetmaps instead of google
