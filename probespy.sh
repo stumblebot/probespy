@@ -240,10 +240,11 @@ pcap_processing () {
 ###############################################################################
 geolocation () {
 	#create the file location.db if it does not already exist
-	if [ -z $(ls $dataDir/location.db) ];
-	then 
+	#if [ -z $(ls $dataDir/location.db) ];
+	#then 
+	#seems like maybe I don't actually need to check if this file exists
 		touch $dataDir/location.db
-	fi
+	#fi
 	
 	echo -------------------------------Begin SSID Lookup---------------------------------
 	
@@ -260,6 +261,8 @@ geolocation () {
 
 ###############################################################################
 #SSID GEOLOCATION FUNCTION
+#	Runs a the geolocation search via wigle and handles some other
+#	location meta-info gathering tasks at this time.
 ###############################################################################
 ssidGeolocation () {
 	#re-instantiate variables (required for parallelization)
@@ -312,9 +315,16 @@ ssidGeolocation () {
 	                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> $dataDir/location.db
 			echo ""
 	        else
+			displayCoordinates=$(echo $wigle | cut -d , -f 1-2)
 			coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
-			address=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates | grep formatted_address | head -n1 | sed -e 's/.*:\ /,/g' -e 's/,$//g')
-			echo $wigle$address >> $dataDir/location.db 
+			#stored json from google's geocoding API
+			geocode=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates)
+			#google's placeid is required to get more meta information about the location
+			placeid=$(echo $geocode | jq .results[].place_id | head -n1 | sed 's/\"//g')
+			#identify what type of address this is
+			addressType=$(curl -s "https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=AIzaSyCPMj_9PkQKstTkTNv9RH5gwY40WmJP8N4" | jq .result.types[])
+			address=$(echo $geocode | jq .results[].formatted_address | head -n1)
+			echo $displayCoordinates$address,$addressType >> $dataDir/location.db 
 			echo "	:LOCATED"
 	        fi
 	fi
