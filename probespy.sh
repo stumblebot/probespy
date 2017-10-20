@@ -5,6 +5,11 @@
 #PRIORITY
 #Local database lookup via wigle export
 #Determine if an address is commercial or residential
+# Partially complete: REMAINING TODO
+# Ensure data entry to location.db is solid when wigle API key is reactivated
+# Ensure data is well represented in txt report
+# Ensure data is well represented in html report
+# Unrelated: figure out what is going on with the elongated lat/lng values
 
 #BACK BURNER
 #Centralized report file
@@ -261,8 +266,8 @@ geolocation () {
 
 ###############################################################################
 #SSID GEOLOCATION FUNCTION
-#	Runs a the geolocation search via wigle and handles some other
-#	location meta-info gathering tasks at this time.
+# Runs a the geolocation search via wigle and handles some other location 
+# meta-info gathering tasks at this time.
 ###############################################################################
 ssidGeolocation () {
 	#re-instantiate variables (required for parallelization)
@@ -290,7 +295,7 @@ ssidGeolocation () {
 	        #       keep entries that return one network            
 	        if [ $userLocation == 'NOLOC' ]
 		then
-			wigle=`curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+			wigle=$(curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=&latrange2=&longrange1=&longrange2=&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," )
 		else
 			#this isn't the RIGHT way to calc these distances, but it's pretty close most of the time 
 			# and I don't care that much about precision at the moment
@@ -307,7 +312,7 @@ ssidGeolocation () {
 
 			#lat/lng is not placed dynamicaly at this time, so these location settings
 			# will only work in the north american lat/lng quadrant
-			wigle=`curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," | cut -d \{ -f 3 | cut -d \} -f 1 | cut -d , -f 1-3,13 `
+			wigle=$(curl --connect-timeout 30 -s -u $WIGLE_API_KEY "https://api.wigle.net/api/v2/network/search?latrange1=$latlow&latrange2=$lathigh&longrange1=$lnglow&longrange2=$lnghigh&variance=0.010&lastupdt=&netid=&ssid=$urlencodeSSID&ssidlike=&Query=Query&resultsPerPage=2" | grep "\"resultCount\"\:1\," )
 		fi
 			
 	        if [ -z "$wigle" ]
@@ -315,16 +320,36 @@ ssidGeolocation () {
 	                echo "\"trilat\":NULL,\"trilong\":NULL,\"ssid\":\"$i\",\"wep\":\"\"" >> $dataDir/location.db
 			echo ""
 	        else
-			displayCoordinates=$(echo $wigle | cut -d , -f 1-2)
-			coordinates=$(echo $wigle | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g')
-			#stored json from google's geocoding API
-			geocode=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates)
-			#google's placeid is required to get more meta information about the location
-			placeid=$(echo $geocode | jq .results[].place_id | head -n1 | sed 's/\"//g')
-			#identify what type of address this is
-			addressType=$(curl -s "https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=AIzaSyCPMj_9PkQKstTkTNv9RH5gwY40WmJP8N4" | jq .result.types[])
-			address=$(echo $geocode | jq .results[].formatted_address | head -n1)
-			echo $displayCoordinates$address,$addressType >> $dataDir/location.db 
+			gkey=$(echo "AIzaSyCPMj_9PkQKstTkTNv9RH5gwY40WmJP8N4")
+			trilat=$(echo $wigle | jq .results[].trilat )
+                        trilong=$(echo $wigle | jq .results[].trilong )
+
+			#add headers and junk for the location.db (re-evaluate if this is still needed pls)
+			displaytrilat=$(echo $trilat | sed -e 's/^/\"trilat\":/g')
+			displaytrilong=$(echo $trilong | sed -e 's/^/\"trilong\":/g')
+
+			#bits and pieces that we need from the wigle results
+			coordinates=$( echo $trilat,$trilong )
+			ssid=$(echo $wigle | jq .results[].ssid | sed -e 's/^/\"ssid\":/g')
+
+			#if the coordinates from wigle return 0,0, as they sometimes do, avoid running
+			# the meta-info lookup because there's no point
+			if [ $coordinates = '0,0' ]
+			then
+				address=$(echo "NULL")
+				addressType=$(echo "NULL")
+			else
+				#Otherwise, try to find out how the location has been identified by google
+				#stored json from google's geocoding API
+				geocode=$(curl -s https://maps.googleapis.com/maps/api/geocode/json?latlng=$coordinates)
+				#google's placeid is required to get more meta information about the location
+				placeid=$(echo $geocode | jq .results[].place_id | head -n1 | sed 's/\"//g')
+				#identify what type of address this is
+				addressType=$(curl -s "https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=$gkey" | jq .result.types[])
+				address=$(echo $geocode | jq .results[].formatted_address | head -n1)
+			fi
+
+			echo $displaytrilat,$displaytrilong,$ssid,$address,$addressType >> $dataDir/location.db 
 			echo "	:LOCATED"
 	        fi
 	fi
