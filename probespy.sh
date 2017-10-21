@@ -6,8 +6,6 @@
 #Local database lookup via wigle export
 #Determine if an address is commercial or residential
 # Partially complete: REMAINING TODO
-# Ensure data entry to location.db is solid when wigle API key is reactivated
-# Ensure data is well represented in txt report
 # Ensure data is well represented in html report
 # Unrelated: figure out what is going on with the elongated lat/lng values
 
@@ -331,13 +329,18 @@ ssidGeolocation () {
 			#bits and pieces that we need from the wigle results
 			coordinates=$( echo $trilat,$trilong )
 			ssid=$(echo $wigle | jq .results[].ssid | sed -e 's/^/\"ssid\":/g')
+			encryption=$(echo $wigle | jq .results[].encryption)
 
-			#if the coordinates from wigle return 0,0, as they sometimes do, avoid running
-			# the meta-info lookup because there's no point
+			#if the coordinates from wigle return 0,0, as they sometimes do, fix them by
+			# marking the locations as unlocated and avoid running the meta-info lookup 
+			# because there's no point
 			if [ $coordinates = '0,0' ]
 			then
+				displaytrilat=$("\"trilat\":NULL")
+	                        displaytrilong=$("\"trilong\":NULL")
 				address=$(echo "NULL")
 				addressType=$(echo "NULL")
+				encryption=$(echo "NULL")
 			else
 				#Otherwise, try to find out how the location has been identified by google
 				#stored json from google's geocoding API
@@ -349,7 +352,7 @@ ssidGeolocation () {
 				address=$(echo $geocode | jq .results[].formatted_address | head -n1)
 			fi
 
-			echo $displaytrilat,$displaytrilong,$ssid,$address,$addressType >> $dataDir/location.db 
+			echo $displaytrilat,$displaytrilong,$ssid,$encryption,$address,$addressType >> $dataDir/location.db 
 			echo "	:LOCATED"
 	        fi
 	fi
@@ -482,7 +485,7 @@ html_gen () {
 		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; } p {color: green; font-family: courier; } ul {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> $htmlDir/$mac.html
 		                	fi
 					#add the image to the profile
-					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 5- | sed -e 's/^\"//g' -e 's/\"$//g'| sed 's/,/<h3>/')
+					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 4- | sed -e 's/\",\"/<h3>/g' -e 's/,/<h3>/' -e 's/\"$//g' -e 's/^\"//g')
 					latlng=$(grep \"$n\" $dataDir/location.db | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g' )
 					echo -n "<td><h3>$n<h3>$latlng<h3>$address<img src=\"$n.png\"></td>" >> $htmlDir/$mac.html
 					#echo -n "<tr><td rowspan=\"3\"><img src=\"$n.png\"</th><td>SSID: $n</td></tr><tr><td>COORDINATE: $latlng</td></tr><tr><td>ADDRESS: $address</td></tr>" >> html/$mac.html
