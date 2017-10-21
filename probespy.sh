@@ -5,19 +5,18 @@
 #PRIORITY
 #Local database lookup via wigle export
 # figure out what is going on with the elongated lat/lng values
-# display remaining networks for html profiles
 
 #BACK BURNER
 #Centralized report file
 #re-integrate direct capture from probespy
 #update report display format
-#use sed to update html report with new images
 #active attacks??
 # beacon honeypotting
 #Change maps lookups to use openstreetmaps instead of google
 #cluster search
 #turn on/off location lookup
 #sort a given run by profile mac address or SSID
+#wigle billing status check
 
 #set the internal field separator to newlines only
 IFS=$'\n'
