@@ -4,10 +4,9 @@
 
 #PRIORITY
 #Local database lookup via wigle export
-#Determine if an address is commercial or residential
-# Partially complete: REMAINING TODO
-# Ensure data is well represented in html report
-# Unrelated: figure out what is going on with the elongated lat/lng values
+# figure out what is going on with the elongated lat/lng values
+# resolve 0,0/null coordinates displaying in html profile
+# display remaining networks for html profiles
 
 #BACK BURNER
 #Centralized report file
@@ -336,8 +335,8 @@ ssidGeolocation () {
 			# because there's no point
 			if [ $coordinates = '0,0' ]
 			then
-				displaytrilat=$("\"trilat\":NULL")
-	                        displaytrilong=$("\"trilong\":NULL")
+				displaytrilat=$(echo "\"trilat\":NULL")
+	                        displaytrilong=$(echo "\"trilong\":NULL")
 				address=$(echo "NULL")
 				addressType=$(echo "NULL")
 				encryption=$(echo "NULL")
