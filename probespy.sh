@@ -5,7 +5,6 @@
 #PRIORITY
 #Local database lookup via wigle export
 # figure out what is going on with the elongated lat/lng values
-# resolve 0,0/null coordinates displaying in html profile
 # display remaining networks for html profiles
 
 #BACK BURNER
@@ -506,10 +505,16 @@ html_gen () {
 				sed -i -e "s/LOCATED_NETS_STRING_HERE/$locatedNets/" $htmlDir/$mac.html
 			fi
 
-			echo "<p><p>Behavioral Profile<ul>" >> $htmlDir/$mac.html
+			echo "<p><p>Networks that have not been located<ul>" >> $htmlDir/$mac.html
 			cat $i | cut -d = -f 2- | while read net
-			do 
-				grep "^$net:" network_meta_info.txt | sed 's/^/<li>/g' >> $htmlDir/$mac.html
+			do
+				behavior=$(grep "^$net:" network_meta_info.txt)
+				if [ -z "$behavior" ]
+				then
+					echo $net | sed 's/^/<li>/g' >> $htmlDir/$mac.html
+				else
+					echo $behavior | sed -e 's/\(.*\):/<b>\1<\/b>:/' -e 's/^/<li>/g' >> $htmlDir/$mac.html
+				fi
 			done
 			echo "</ul></body></html>" >> $htmlDir/$mac.html
 		fi
