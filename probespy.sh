@@ -432,8 +432,9 @@ html_gen () {
 		mac=$(echo $i |  sed 's/.*\///g' | cut -d . -f 1)
 		manufacturer=$(grep -i $(echo $mac | cut -d : -f -3 | sed 's/://g' ) /usr/share/ieee-data/oui.txt | cut -d '	' -f 3)
 		#apply the following actions only on .mac profiles with more than one SSID
-		if [ "$(cat $i | wc -l)" -gt 1 ]
-		then 
+		#I'm disabling this temporarily for now. I may make it a flagged option?
+#		if [ "$(cat $i | wc -l)" -gt 1 ]
+#		then 
 			#Download google maps image for this location
 			#for each SSID in this .mac profile
 			for j in $(cat $i | cut -d = -f 2-)
@@ -490,7 +491,8 @@ html_gen () {
 					#echo -n "<tr><td rowspan=\"3\"><img src=\"$n.png\"</th><td>SSID: $n</td></tr><tr><td>COORDINATE: $latlng</td></tr><tr><td>ADDRESS: $address</td></tr>" >> html/$mac.html
 		                fi
 			done
-		fi
+#end of 'one probe' profile generation loop
+#		fi
 
 		#now that the profile has been fully generated, replace placeholder 
 		#	for number of located networks with the actual value
