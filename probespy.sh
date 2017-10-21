@@ -510,7 +510,11 @@ html_gen () {
 				behavior=$(grep "^$net:" network_meta_info.txt)
 				if [ -z "$behavior" ]
 				then
-					echo $net | sed 's/^/<li>/g' >> $htmlDir/$mac.html
+					if [ -z "$(grep -v "\"trilat\":NULL,\"trilong\":NULL" $dataDir/location.db | grep ",\"ssid\":\"$net\"," )" ]
+					then 
+						echo $net | sed 's/^/<li>/g' >> $htmlDir/$mac.html
+					fi
+#					echo $net | sed 's/^/<li>/g' >> $htmlDir/$mac.html
 				else
 					echo $behavior | sed -e 's/\(.*\):/<b>\1<\/b>:/' -e 's/^/<li>/g' >> $htmlDir/$mac.html
 				fi
