@@ -17,8 +17,8 @@ CMU-SECURE: University wifi. Visited Carnegie Mellon University, PA, USA.
 Comfort_Suites: Hotel wifi. Traveller. Comfort Inn and Suites Customer.
 CountryInnAndSuites: Hotel wifi. Traveller. Country Inn and Suites Customer.
 Courtyard_GUEST: Hotel wifi. Traveller. Courtyard Customer.
-DefCon: Defcon attendee. Visited Las Vegas, .
-DefCon-Open: Defcon attendee. Visited Las Vegas. RENEGADE.
+DefCon: Defcon attendee. Visited Las Vegas, NV, USA.
+DefCon-Open: Defcon attendee. Visited Las Vegas, NV, USA. RENEGADE.
 DeltaSkyClub: Airport wifi. Traveller. Delta Airlines Customer.
 - DEN Airport Free WiFi: Airport wifi. Traveller. Visited DEN Airport, CO, USA.
 Detroit Airport Wi-Fi: Airport wifi. Traveller. Visited DTW Airport, MI, USA.
@@ -82,6 +82,11 @@ WIFI_BEN_GURION_AIRPORT: Airport wifi. Traveller. Visited Ben Gurion Airport, Is
 #WiFi@Changi: Airport wifi. Traveller. Visited Changi Airport, Shanghai, China.
 www.hotel-litz.de: Hotel wifi. Traveller. Hotel Litz Customer. Visited Langenargen, Germany.
 xfinitywifi: ISP Shared wifi. Potential Xfinity Customer.
-YOW Free Wi-Fi: Airport wifi. Traveller. Visited YOW Airport, Ottawa, CA
+YOW Free Wi-Fi: Airport wifi. Traveller. Visited YOW Airport, Ottawa, CA.
 Five Guys: Restaraunt wifi. Five Guys Customer.
-FlyDulles: Airport wifi. Traveller. Visited IAD Airport, Washington DC, USA
+FlyDulles: Airport wifi. Traveller. Visited IAD Airport, Washington DC, USA.
+VenetianPalazzoWifi: Hotel wifi. Traveller. Visited Venetian Palazzo Hotel, Las Vegas, NV, USA.
+McCarran WiFi: Airport wifi. Traveller. Visited Las Vegas, NV, USA.
+united_club: Airline wifi. Traveller. United airlines customer.
+Copthorne Lobby Wireless: Hotel wifi. Traveller. Copthorne Hotels Customer.
+flyCOS: Airport wifi. Traveller. Visited Colorado Springs, CO, USA.
