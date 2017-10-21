@@ -252,7 +252,7 @@ geolocation () {
 	#we need to pass some arguments to the other function in order for it to work
 	cat $dataDir/all.compressed | cut -d = -f 2- | sort -u | parallel --no-notice -j 10 ssidGeolocation {} $dataDir $userLocation $WIGLE_API_KEY $searchRange
 
-	echo -----------------------------SSID Lookup Complete--------------------------------
+	echo ------------------------------SSID Lookup Complete-------------------------------
 
 	#remove duplicates and sort
 	echo Trimming the database
@@ -480,12 +480,13 @@ html_gen () {
 					if [ -z "$(grep $mac $htmlDir/*html  2>/dev/null)" ]
 		                	then
 						uniqueNets=$(cat $i | wc -l)
-		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; } p {color: green; font-family: courier; } ul {color: green; font-family: courier; }</style><body><h1>Device ID $mac, manufacturer:$manufacturer is looking for $uniqueNets networks<h1> LOCATED_NETS_STRING_HERE nets have been located </h1><table><tr>" >> $htmlDir/$mac.html
+		                        	echo -n "<html><head><meta http-equiv=\"refresh\" content=\"15\"></head><style>table, th, td {border: 1px solid green;color: green;font-family: courier;border-collapse: collapse;} td { width:400px} body{background-color: black}h1 {color: green; text-align: left; font-family: courier; } p { color: green; font-family: courier; } h3 {color: green; font-family: courier; } p {color: green; font-family: courier; } ul {color: green; font-family: courier; }</style><body><h2><p>Device ID $mac, manufacturer:$manufacturer <p>Looking for $uniqueNets network(s):::Located network count: LOCATED_NETS_STRING_HERE</h1><table><tr>" >> $htmlDir/$mac.html
 		                	fi
 					#add the image to the profile
-					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 4- | sed -e 's/\",\"/<h3>/g' -e 's/,/<h3>/' -e 's/\"$//g' -e 's/^\"//g')
+					address=$(grep \"$n\" $dataDir/location.db | cut -d , -f 5- | sed -e 's/\",\"/<h3>/g' -e 's/,/<h3>/' -e 's/\"$//g' -e 's/^\"//g')
 					latlng=$(grep \"$n\" $dataDir/location.db | cut -d , -f 1-2 | sed -e 's/"trilat"://g' -e 's/"trilong"://g' )
-					echo -n "<td><h3>$n<h3>$latlng<h3>$address<img src=\"$n.png\"></td>" >> $htmlDir/$mac.html
+					encryption=$(grep \"$n\" $dataDir/location.db| cut -d , -f 4 | sed 's/\"//g')
+					echo -n "<td><h3>SSID: $n<h3>LAT,LNG: $latlng<h3>Encryption: $encryption<h3>$address<img src=\"$n.png\"></td>" >> $htmlDir/$mac.html
 					#echo -n "<tr><td rowspan=\"3\"><img src=\"$n.png\"</th><td>SSID: $n</td></tr><tr><td>COORDINATE: $latlng</td></tr><tr><td>ADDRESS: $address</td></tr>" >> html/$mac.html
 		                fi
 			done
@@ -519,6 +520,12 @@ html_gen () {
 					echo $behavior | sed -e 's/\(.*\):/<b>\1<\/b>:/' -e 's/^/<li>/g' >> $htmlDir/$mac.html
 				fi
 			done
+			
+			if [ -z "$(grep "<li>" $htmlDir/$mac.html)" ]
+			then 
+				sed -i -e 's/<p>Networks that have not been located<ul>//g' $htmlDir/$mac.html
+			fi
+			
 			echo "</ul></body></html>" >> $htmlDir/$mac.html
 		fi
 		
